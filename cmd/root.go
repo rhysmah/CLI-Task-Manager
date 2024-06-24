@@ -11,9 +11,7 @@ import (
 )
 
 var (
-	showCompleted   bool
-	showIncompleted bool
-	tasks           = make(map[string]bool)
+	tasks = make(map[string]bool)
 )
 
 /*
@@ -25,55 +23,6 @@ var rootCmd = &cobra.Command{
 	Short: "A simple CLI task manager written in Go.",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Welcome to the CLI Task Manager!")
-	},
-}
-
-var addCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Add a task to your task list.",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		taskDescription := args[0]
-		tasks[taskDescription] = false
-		fmt.Printf("Adding \"%s\" to your task list...\n", taskDescription)
-	},
-}
-
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all tasks in your task list.",
-	Run: func(cmd *cobra.Command, args []string) {
-
-		// Get flag values
-		showCompleted, _ := cmd.Flags().GetBool("completed")
-		showUncompleted, _ := cmd.Flags().GetBool("uncompleted")
-
-		if len(tasks) == 0 {
-			fmt.Println("You currently have no tasks in your list!")
-			return
-		}
-
-		filteredTasks := filterTasks(tasks, showCompleted, showUncompleted)
-
-		fmt.Println("####################")
-		fmt.Println("#    Your Tasks    #")
-		fmt.Println("####################")
-		for task, isComplete := range filteredTasks {
-			if isComplete {
-				fmt.Println("[✓]", task)
-			} else {
-				fmt.Println("[ ]", task)
-			}
-		}
-	},
-}
-
-var doCmd = &cobra.Command{
-	Use:   "do",
-	Short: "Mark a task on your task list as complete.",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Marking a task as complete...")
 	},
 }
 
@@ -107,24 +56,6 @@ func init() {
 		Add flags to the commands. Flags are options that the user can
 		pass to the command when they run the CLI application.
 	*/
-	addCmd.Flags().StringP("task", "t", "", "The task to add to your task list.")
-
-	listCmd.Flags().BoolVarP(&showCompleted, "completed", "c", false, "Show completed tasks.")
-	listCmd.Flags().BoolVarP(&showIncompleted, "uncompleted", "u", false, "Show uncompleted tasks.")
-}
-
-func filterTasks(tasks map[string]bool, showCompleted, showIncompleted bool) map[string]bool {
-	if !showCompleted && !showIncompleted {
-		return tasks
-	}
-
-	filteredTasks := make(map[string]bool)
-	for task, isComplete := range tasks {
-		if showCompleted && isComplete {
-			filteredTasks[task] = isComplete
-		} else if showIncompleted && !isComplete {
-			filteredTasks[task] = isComplete
-		}
-	}
-	return filteredTasks
+	listCmd.Flags().BoolP("completed", "c", false, "Show completed tasks.")
+	listCmd.Flags().BoolP("uncompleted", "u", false, "Show uncompleted tasks.")
 }
