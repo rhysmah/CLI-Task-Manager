@@ -36,7 +36,6 @@ func Execute() {
 }
 
 func init() {
-
 	tasks = map[string]bool{
 		"task1": false,
 		"task2": true,
