@@ -19,7 +19,7 @@ var (
 This is what's called when the CLI application is run.
 */
 var rootCmd = &cobra.Command{
-	Use:   "task",
+	Use:   "task [command]",
 	Short: "A simple CLI task manager written in Go.",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Welcome to the CLI Task Manager!")

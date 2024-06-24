@@ -8,10 +8,7 @@ import (
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all tasks in your task list.",
-	Long: `List all tasks in your task list. 
-You can use the '--completed' and '--uncompleted' flags to filter by task type.
-Using no flags will display both completed and uncompleted tasks.`,
+	Short: "\nList all tasks in your task list.",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Get flag values
@@ -28,12 +25,15 @@ Using no flags will display both completed and uncompleted tasks.`,
 		fmt.Println("####################")
 		fmt.Println("#    Your Tasks    #")
 		fmt.Println("####################")
+
+		index := 1
 		for task, isComplete := range filteredTasks {
 			if isComplete {
-				fmt.Println("[✓]", task)
+				fmt.Printf("%d. [✓] %s\n", index, task)
 			} else {
-				fmt.Println("[ ]", task)
+				fmt.Printf("%d. [ ] %s\n", index, task)
 			}
+			index++
 		}
 	},
 }
