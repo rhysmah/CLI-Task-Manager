@@ -9,6 +9,9 @@ import (
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all tasks in your task list.",
+	Long: `List all tasks in your task list. 
+You can use the '--completed' and '--uncompleted' flags to filter by task type.
+Using no flags will display both completed and uncompleted tasks.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Get flag values
