@@ -12,6 +12,47 @@ const dbFileName = "tasks.db"
 const bucketName = "Tasks"
 const readWriteCode = 0600
 
+func ListTasks() (map[string]bool, error) {
+
+	fmt.Println("Opening database...")
+	db, err := bolt.Open(dbFileName, readWriteCode, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error opening database: %s", err)
+	}
+	defer db.Close()
+
+	tasks := make(map[string]bool)
+
+	// Begin a read-only transaction
+	fmt.Println("Reading tasks in database...")
+	err = db.View(func(transaction *bolt.Tx) error {
+
+		// Retrieve bucket
+		bucket := transaction.Bucket([]byte(bucketName))
+		if bucket == nil {
+			return fmt.Errorf("%s not found: ", bucketName)
+		}
+
+		return bucket.ForEach(func(k, v []byte) error {
+
+			taskAsString := string(k)
+			valueAsString := string(v)
+			valueStringAsBool, err := strconv.ParseBool(valueAsString)
+			if err != nil {
+				return fmt.Errorf("error retrieving task value: %s", err)
+			}
+			tasks[taskAsString] = valueStringAsBool
+			return nil
+		})
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("Tasks successfully read from database!")
+	return tasks, err
+}
+
 func WriteTask(task string) error {
 
 	fmt.Println("Opening database...")

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cli-task-manager/database"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -15,8 +16,9 @@ var listCmd = &cobra.Command{
 		showCompleted, _ := cmd.Flags().GetBool("completed")
 		showUncompleted, _ := cmd.Flags().GetBool("uncompleted")
 
-		if len(tasks) == 0 {
-			fmt.Println("You currently have no tasks in your list!")
+		tasks, err := database.ListTasks()
+		if err != nil {
+			fmt.Println("Error reading tasks from database:", err)
 			return
 		}
 
