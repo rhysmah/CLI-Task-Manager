@@ -10,10 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	tasks = make(map[string]bool)
-)
-
 /*
 `rootCmd` is the root command for the CLI application
 This is what's called when the CLI application is run.
@@ -36,10 +32,6 @@ func Execute() {
 }
 
 func init() {
-	tasks = map[string]bool{
-		"task1": false,
-		"task2": true,
-	}
 
 	/*
 		Add commands to the root command. This adds actions to the CLI
