@@ -42,6 +42,7 @@ func init() {
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(doCmd)
 	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(removeCmd)
 
 	/*
 		Add flags to the commands. Flags are options that the user can
@@ -49,4 +50,5 @@ func init() {
 	*/
 	listCmd.Flags().BoolP("completed", "c", false, "Show completed tasks.")
 	listCmd.Flags().BoolP("uncompleted", "u", false, "Show uncompleted tasks.")
+	removeCmd.Flags().BoolP("all", "a", false, "Remove all tasks.")
 }

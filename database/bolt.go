@@ -104,3 +104,49 @@ func DoTask(task string) error {
 		})
 	})
 }
+
+func RemoveTask(task string) error {
+
+	fmt.Println("Attempting to delete task...")
+	return withDatabase(func(db *bolt.DB) error {
+
+		return db.Update(func(t *bolt.Tx) error {
+			bucket := t.Bucket([]byte(bucketName))
+			if bucket == nil {
+				return fmt.Errorf("task '%s' not found", task)
+			}
+
+			taskAsByte := []byte(task)
+			cursor := bucket.Cursor()
+			k, _ := cursor.Seek(taskAsByte)
+			if k == nil || string(k) != task {
+				return fmt.Errorf("task '%s' not found", task)
+			}
+
+			err := bucket.Delete(taskAsByte)
+			if err != nil {
+				return fmt.Errorf("failed to delete task '%s': %w", task, err)
+			}
+
+			fmt.Printf("Task '%s' successfully deleted!", task)
+			return nil
+		})
+	})
+}
+
+func RemoveAllTasks() error {
+
+	fmt.Println("Attempting to delete all tasks...")
+
+	return withDatabase(func(db *bolt.DB) error {
+		return db.Update(func(t *bolt.Tx) error {
+			err := t.DeleteBucket([]byte(bucketName))
+			if err != nil {
+				fmt.Printf("Bucket '%s' not found. Creating bucket...", bucketName)
+			}
+			fmt.Println("Successfully removed all tasks!")
+			t.CreateBucketIfNotExists([]byte(bucketName))
+			return nil
+		})
+	})
+}
