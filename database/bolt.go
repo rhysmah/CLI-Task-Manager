@@ -132,7 +132,6 @@ func RemoveTask(task string) error {
 				return fmt.Errorf("failed to delete task '%s': %w", task, err)
 			}
 
-			log.Printf("Task '%s' successfully deleted!", task)
 			return nil
 		})
 	})
