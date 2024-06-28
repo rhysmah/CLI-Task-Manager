@@ -79,13 +79,13 @@ func DoTask(task string) error {
 func ListTasks() (map[string]bool, error) {
 	tasksFromDb := make(map[string]bool)
 
-	fmt.Println("Reading tasks in database...")
+	fmt.Println("Reading tasks...")
 	err := withDatabase(func(db *bolt.DB) error {
 
 		return db.View(func(t *bolt.Tx) error {
-			bucket, err := t.CreateBucketIfNotExists([]byte(bucketName))
-			if err != nil {
-				return fmt.Errorf("error creating bucket: %w", err)
+			bucket := t.Bucket([]byte(bucketName))
+			if bucket == nil {
+				return fmt.Errorf("bucket '%s' doesn't exist", bucketName)
 			}
 
 			return bucket.ForEach(func(k, v []byte) error {
@@ -105,7 +105,7 @@ func ListTasks() (map[string]bool, error) {
 		return nil, err
 	}
 
-	fmt.Println("Successfully read tasks!")
+	log.Println("Successfully read all tasks")
 	return tasksFromDb, nil
 }
 
