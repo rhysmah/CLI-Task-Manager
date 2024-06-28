@@ -3,6 +3,7 @@ package cmd
 import (
 	"cli-task-manager/database"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -16,8 +17,10 @@ var doCmd = &cobra.Command{
 		taskDescription := strings.Join(args, " ")
 		err := database.DoTask(taskDescription)
 		if err != nil {
-			fmt.Println("Error writing task to database:", err)
+			log.Printf("Error marking task '%s' as complete: %v", taskDescription, err)
+			fmt.Printf("An error occurred while marking the task as complete: %v\n", err)
 			return
 		}
+		fmt.Printf("Task '%s' successfully marked as complete!\n", taskDescription)
 	},
 }

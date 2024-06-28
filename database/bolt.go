@@ -47,6 +47,35 @@ func AddTask(task string) error {
 	})
 }
 
+func DoTask(task string) error {
+
+	fmt.Println("Accessing tasks...")
+	return withDatabase(func(db *bolt.DB) error {
+
+		return db.Update(func(t *bolt.Tx) error {
+			bucket := t.Bucket([]byte(bucketName))
+			if bucket == nil {
+				return fmt.Errorf("bucket '%s' doesn't exist", bucketName)
+			}
+
+			taskAsByte := []byte(task)
+			cursor := bucket.Cursor()
+			k, _ := cursor.Seek(taskAsByte)
+			if k == nil || string(k) != task {
+				return fmt.Errorf("task '%s' not found", task)
+			}
+
+			err := bucket.Put(taskAsByte, []byte(strconv.FormatBool(true)))
+			if err != nil {
+				return fmt.Errorf("error marking task '%s' as complete: %w", task, err)
+			}
+
+			log.Printf("Task '%s' marked as complete", task)
+			return nil
+		})
+	})
+}
+
 func ListTasks() (map[string]bool, error) {
 	tasksFromDb := make(map[string]bool)
 
@@ -78,34 +107,6 @@ func ListTasks() (map[string]bool, error) {
 
 	fmt.Println("Successfully read tasks!")
 	return tasksFromDb, nil
-}
-
-func DoTask(task string) error {
-
-	fmt.Println("Accessing tasks from database...")
-	return withDatabase(func(db *bolt.DB) error {
-
-		return db.Update(func(t *bolt.Tx) error {
-			bucket, err := t.CreateBucketIfNotExists([]byte(bucketName))
-			if err != nil {
-				return fmt.Errorf("error accessing/creating bucket: %w", err)
-			}
-
-			taskAsByte := []byte(task)
-			cursor := bucket.Cursor()
-			k, _ := cursor.Seek(taskAsByte)
-
-			// Check that returned value equals original task because
-			// Seek() returns next key if target key doesn't exist
-			if k != nil && string(k) == task {
-				fmt.Printf("Marking the task '%s' complete!", task)
-				bucket.Put(taskAsByte, []byte(strconv.FormatBool(true)))
-				return nil
-			}
-
-			return fmt.Errorf("task '%s' doesn't exist", task)
-		})
-	})
 }
 
 func RemoveTask(task string) error {
