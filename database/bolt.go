@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/boltdb/bolt"
@@ -24,13 +25,35 @@ func withDatabase(operation func(db *bolt.DB) error) error {
 	return operation(db)
 }
 
+func AddTask(task string) error {
+
+	return withDatabase(func(db *bolt.DB) error {
+
+		return db.Update(func(t *bolt.Tx) error {
+			bucket, err := t.CreateBucketIfNotExists([]byte(bucketName))
+			if err != nil {
+				return fmt.Errorf("error creating bucket: %w", err)
+			}
+
+			falseAsByteSlice := []byte(strconv.FormatBool(false))
+			err = bucket.Put([]byte(task), falseAsByteSlice)
+			if err != nil {
+				return fmt.Errorf("error writing task to database: %w", err)
+			}
+
+			log.Printf("Task '%s' successfully written to database.", task)
+			return nil
+		})
+	})
+}
+
 func ListTasks() (map[string]bool, error) {
 	tasksFromDb := make(map[string]bool)
 
 	fmt.Println("Reading tasks in database...")
 	err := withDatabase(func(db *bolt.DB) error {
 
-		return db.Update(func(t *bolt.Tx) error {
+		return db.View(func(t *bolt.Tx) error {
 			bucket, err := t.CreateBucketIfNotExists([]byte(bucketName))
 			if err != nil {
 				return fmt.Errorf("error creating bucket: %w", err)
@@ -57,33 +80,13 @@ func ListTasks() (map[string]bool, error) {
 	return tasksFromDb, nil
 }
 
-func WriteTask(task string) error {
-	return withDatabase(func(db *bolt.DB) error {
-		return db.Update(func(transaction *bolt.Tx) error {
-
-			bucket, err := transaction.CreateBucketIfNotExists([]byte(bucketName))
-			if err != nil {
-				return fmt.Errorf("error creating bucket: %w", err)
-			}
-
-			falseAsByteSlice := []byte(strconv.FormatBool(false))
-			err = bucket.Put([]byte(task), falseAsByteSlice)
-			if err != nil {
-				return fmt.Errorf("error writing task to database: %w", err)
-			}
-			fmt.Printf("Task '%s' successfully written to database!\n", task)
-			return nil
-		})
-	})
-}
-
 func DoTask(task string) error {
 
 	fmt.Println("Accessing tasks from database...")
 	return withDatabase(func(db *bolt.DB) error {
 
-		return db.Update(func(transaction *bolt.Tx) error {
-			bucket, err := transaction.CreateBucketIfNotExists([]byte(bucketName))
+		return db.Update(func(t *bolt.Tx) error {
+			bucket, err := t.CreateBucketIfNotExists([]byte(bucketName))
 			if err != nil {
 				return fmt.Errorf("error accessing/creating bucket: %w", err)
 			}
