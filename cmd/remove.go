@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// removeCmd represents the remove command
 var removeCmd = &cobra.Command{
 	Use:   "remove",
 	Short: "Removes a task from your task list",

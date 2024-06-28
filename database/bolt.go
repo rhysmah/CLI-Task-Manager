@@ -117,7 +117,7 @@ func RemoveTask(task string) error {
 		return db.Update(func(t *bolt.Tx) error {
 			bucket := t.Bucket([]byte(bucketName))
 			if bucket == nil {
-				return fmt.Errorf("task '%s' not found", task)
+				return fmt.Errorf("bucket '%s' not found", bucketName)
 			}
 
 			taskAsByte := []byte(task)
@@ -132,7 +132,7 @@ func RemoveTask(task string) error {
 				return fmt.Errorf("failed to delete task '%s': %w", task, err)
 			}
 
-			fmt.Printf("Task '%s' successfully deleted!", task)
+			log.Printf("Task '%s' successfully deleted!", task)
 			return nil
 		})
 	})
@@ -141,15 +141,26 @@ func RemoveTask(task string) error {
 func RemoveAllTasks() error {
 
 	fmt.Println("Attempting to delete all tasks...")
-
 	return withDatabase(func(db *bolt.DB) error {
+
 		return db.Update(func(t *bolt.Tx) error {
 			err := t.DeleteBucket([]byte(bucketName))
-			if err != nil {
-				fmt.Printf("Bucket '%s' not found. Creating bucket...", bucketName)
+			if err != nil && err != bolt.ErrBucketNotFound {
+				return fmt.Errorf("failed to delete bucket '%s': %w", bucketName, err)
 			}
-			fmt.Println("Successfully removed all tasks!")
-			t.CreateBucketIfNotExists([]byte(bucketName))
+
+			if err == bolt.ErrBucketNotFound {
+				log.Printf("Bucket '%s' not found. Creating a new bucket...", bucketName)
+			} else {
+				log.Printf("Bucket '%s' successfully removed. Creating a new empty bucket...", bucketName)
+			}
+
+			_, err = t.CreateBucket([]byte(bucketName))
+			if err != nil {
+				return fmt.Errorf("failed to create bucket '%s': %w", bucketName, err)
+			}
+
+			log.Println("Successfully removed all tasks")
 			return nil
 		})
 	})
