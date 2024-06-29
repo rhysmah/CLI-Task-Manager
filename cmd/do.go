@@ -17,7 +17,7 @@ var doCmd = &cobra.Command{
 		taskDescription := strings.Join(args, " ")
 		err := database.DoTask(taskDescription)
 		if err != nil {
-			fmt.Printf("An error occurred while marking the task as complete: %s \n", err)
+			fmt.Printf("An error occurred while marking the task as complete: %s\n", err)
 			return
 		}
 		fmt.Printf("Task '%s' marked as complete!\n", taskDescription)

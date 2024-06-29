@@ -18,7 +18,7 @@ var removeCmd = &cobra.Command{
 		if removeAll {
 			err := database.RemoveAllTasks()
 			if err != nil {
-				fmt.Printf("Error removing all tasks: %s", err)
+				fmt.Printf("Error removing all tasks: %s\n", err)
 				return
 			}
 			fmt.Println("Successfully removed all tasks")
@@ -29,9 +29,9 @@ var removeCmd = &cobra.Command{
 		taskDescription := strings.Join(args, " ")
 		err := database.RemoveTask(taskDescription)
 		if err != nil {
-			fmt.Printf("Error removing task '%s': %s", taskDescription, err)
+			fmt.Printf("Error removing task '%s': %s\n", taskDescription, err)
 			return
 		}
-		fmt.Printf("Task '%s' successfully removed", taskDescription)
+		fmt.Printf("Task '%s' successfully removed\n", taskDescription)
 	},
 }

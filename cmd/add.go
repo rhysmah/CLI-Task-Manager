@@ -20,6 +20,6 @@ var addCmd = &cobra.Command{
 			fmt.Printf("Error writing task '%s': %s\n", taskDescription, err)
 			return
 		}
-		fmt.Printf("Task '%s' successfully added to list!\n", taskDescription)
+		fmt.Printf("Task '%s' successfully added!\n", taskDescription)
 	},
 }

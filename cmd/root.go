@@ -32,22 +32,11 @@ func Execute() {
 }
 
 func init() {
-
-	/*
-		Add commands to the root command. This adds actions to the CLI
-		application. When the user runs the CLI application, they can
-		choose to run one of these commands, which will execute their
-		respective functions defined in the `Run` field.
-	*/
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(doCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(removeCmd)
 
-	/*
-		Add flags to the commands. Flags are options that the user can
-		pass to the command when they run the CLI application.
-	*/
 	listCmd.Flags().BoolP("completed", "c", false, "Show completed tasks.")
 	listCmd.Flags().BoolP("uncompleted", "u", false, "Show uncompleted tasks.")
 	removeCmd.Flags().BoolP("all", "a", false, "Remove all tasks.")
