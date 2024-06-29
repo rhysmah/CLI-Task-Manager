@@ -15,7 +15,6 @@ const (
 )
 
 func withDatabase(operation func(db *bolt.DB) error) error {
-	fmt.Println("Accessing database...")
 	db, err := bolt.Open(dbFileName, readWriteCode, nil)
 	if err != nil {
 		return fmt.Errorf("error opening database: %w", err)
@@ -26,7 +25,6 @@ func withDatabase(operation func(db *bolt.DB) error) error {
 }
 
 func AddTask(task string) error {
-
 	return withDatabase(func(db *bolt.DB) error {
 
 		return db.Update(func(t *bolt.Tx) error {
@@ -41,15 +39,13 @@ func AddTask(task string) error {
 				return fmt.Errorf("error writing task to database: %w", err)
 			}
 
-			log.Printf("Task '%s' successfully written to database.", task)
+			log.Printf("Successfully added task '%s' to %s", task, bucketName)
 			return nil
 		})
 	})
 }
 
 func DoTask(task string) error {
-
-	fmt.Println("Accessing tasks...")
 	return withDatabase(func(db *bolt.DB) error {
 
 		return db.Update(func(t *bolt.Tx) error {
@@ -70,7 +66,7 @@ func DoTask(task string) error {
 				return fmt.Errorf("error marking task '%s' as complete: %w", task, err)
 			}
 
-			log.Printf("Task '%s' marked as complete", task)
+			log.Printf("Successfully completed task '%s' in %s", task, bucketName)
 			return nil
 		})
 	})
@@ -79,9 +75,7 @@ func DoTask(task string) error {
 func ListTasks() (map[string]bool, error) {
 	tasksFromDb := make(map[string]bool)
 
-	fmt.Println("Reading tasks...")
 	err := withDatabase(func(db *bolt.DB) error {
-
 		return db.View(func(t *bolt.Tx) error {
 			bucket := t.Bucket([]byte(bucketName))
 			if bucket == nil {
@@ -92,7 +86,7 @@ func ListTasks() (map[string]bool, error) {
 				taskAsString := string(k)
 				valueAsBool, err := strconv.ParseBool(string(v))
 				if err != nil {
-					return fmt.Errorf("error retrieving tasks %s: %w", taskAsString, err)
+					return fmt.Errorf("error retrieving task %s: %w", taskAsString, err)
 				}
 
 				tasksFromDb[taskAsString] = valueAsBool
@@ -105,13 +99,11 @@ func ListTasks() (map[string]bool, error) {
 		return nil, err
 	}
 
-	log.Println("Successfully read all tasks")
+	log.Printf("Successfully retrieved all tasks from %s", bucketName)
 	return tasksFromDb, nil
 }
 
 func RemoveTask(task string) error {
-
-	fmt.Println("Attempting to delete task...")
 	return withDatabase(func(db *bolt.DB) error {
 
 		return db.Update(func(t *bolt.Tx) error {
@@ -132,14 +124,13 @@ func RemoveTask(task string) error {
 				return fmt.Errorf("failed to delete task '%s': %w", task, err)
 			}
 
+			log.Printf("Successfully removed task '%s' from %s", task, bucketName)
 			return nil
 		})
 	})
 }
 
 func RemoveAllTasks() error {
-
-	fmt.Println("Attempting to delete all tasks...")
 	return withDatabase(func(db *bolt.DB) error {
 
 		return db.Update(func(t *bolt.Tx) error {
@@ -159,7 +150,7 @@ func RemoveAllTasks() error {
 				return fmt.Errorf("failed to create bucket '%s': %w", bucketName, err)
 			}
 
-			log.Println("Successfully removed all tasks")
+			log.Printf("Successfully removed all tasks from %s", bucketName)
 			return nil
 		})
 	})
