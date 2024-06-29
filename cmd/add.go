@@ -3,6 +3,7 @@ package cmd
 import (
 	"cli-task-manager/database"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -10,15 +11,15 @@ import (
 var addCmd = &cobra.Command{
 	Use:   "add [task description]",
 	Short: "\nAdd a task to your task list.",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		taskDescription := args[0]
-
-		err := database.WriteTask(taskDescription)
+		taskDescription := strings.Join(args, " ")
+		err := database.AddTask(taskDescription)
 		if err != nil {
-			fmt.Println("Error writing task to database:", err)
+			fmt.Printf("error writing task '%s': %v\n", taskDescription, err)
 			return
 		}
+		fmt.Printf("Task '%s' successfully written to database!\n", taskDescription)
 	},
 }

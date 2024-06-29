@@ -8,89 +8,159 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-const dbFileName = "tasks.db"
-const bucketName = "Tasks"
-const readWriteCode = 0600
+const (
+	dbFileName    = "tasks.db"
+	bucketName    = "Tasks"
+	readWriteCode = 0600
+)
 
-func ListTasks() (map[string]bool, error) {
-
-	fmt.Println("Opening database...")
+func withDatabase(operation func(db *bolt.DB) error) error {
+	fmt.Println("Accessing database...")
 	db, err := bolt.Open(dbFileName, readWriteCode, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error opening database: %s", err)
+		return fmt.Errorf("error opening database: %w", err)
 	}
 	defer db.Close()
 
-	tasks := make(map[string]bool)
+	return operation(db)
+}
 
-	// Begin a read-only transaction
-	fmt.Println("Reading tasks in database...")
-	err = db.View(func(transaction *bolt.Tx) error {
+func AddTask(task string) error {
 
-		// Retrieve bucket
-		bucket := transaction.Bucket([]byte(bucketName))
-		if bucket == nil {
-			return fmt.Errorf("%s not found: ", bucketName)
-		}
+	return withDatabase(func(db *bolt.DB) error {
 
-		return bucket.ForEach(func(k, v []byte) error {
-
-			taskAsString := string(k)
-			valueAsString := string(v)
-			valueStringAsBool, err := strconv.ParseBool(valueAsString)
+		return db.Update(func(t *bolt.Tx) error {
+			bucket, err := t.CreateBucketIfNotExists([]byte(bucketName))
 			if err != nil {
-				return fmt.Errorf("error retrieving task value: %s", err)
+				return fmt.Errorf("error creating bucket: %w", err)
 			}
-			tasks[taskAsString] = valueStringAsBool
+
+			falseAsByteSlice := []byte(strconv.FormatBool(false))
+			err = bucket.Put([]byte(task), falseAsByteSlice)
+			if err != nil {
+				return fmt.Errorf("error writing task to database: %w", err)
+			}
+
+			log.Printf("Task '%s' successfully written to database.", task)
 			return nil
+		})
+	})
+}
+
+func DoTask(task string) error {
+
+	fmt.Println("Accessing tasks...")
+	return withDatabase(func(db *bolt.DB) error {
+
+		return db.Update(func(t *bolt.Tx) error {
+			bucket := t.Bucket([]byte(bucketName))
+			if bucket == nil {
+				return fmt.Errorf("bucket '%s' doesn't exist", bucketName)
+			}
+
+			taskAsByte := []byte(task)
+			cursor := bucket.Cursor()
+			k, _ := cursor.Seek(taskAsByte)
+			if k == nil || string(k) != task {
+				return fmt.Errorf("task '%s' not found", task)
+			}
+
+			err := bucket.Put(taskAsByte, []byte(strconv.FormatBool(true)))
+			if err != nil {
+				return fmt.Errorf("error marking task '%s' as complete: %w", task, err)
+			}
+
+			log.Printf("Task '%s' marked as complete", task)
+			return nil
+		})
+	})
+}
+
+func ListTasks() (map[string]bool, error) {
+	tasksFromDb := make(map[string]bool)
+
+	fmt.Println("Reading tasks...")
+	err := withDatabase(func(db *bolt.DB) error {
+
+		return db.View(func(t *bolt.Tx) error {
+			bucket := t.Bucket([]byte(bucketName))
+			if bucket == nil {
+				return fmt.Errorf("bucket '%s' doesn't exist", bucketName)
+			}
+
+			return bucket.ForEach(func(k, v []byte) error {
+				taskAsString := string(k)
+				valueAsBool, err := strconv.ParseBool(string(v))
+				if err != nil {
+					return fmt.Errorf("error retrieving tasks %s: %w", taskAsString, err)
+				}
+
+				tasksFromDb[taskAsString] = valueAsBool
+				return nil
+			})
 		})
 	})
 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Tasks successfully read from database!")
-	return tasks, err
+
+	log.Println("Successfully read all tasks")
+	return tasksFromDb, nil
 }
 
-func WriteTask(task string) error {
+func RemoveTask(task string) error {
 
-	fmt.Println("Opening database...")
-	db, err := bolt.Open(dbFileName, readWriteCode, nil)
-	if err != nil {
-		return fmt.Errorf("error opening database: %s", err)
-	}
+	fmt.Println("Attempting to delete task...")
+	return withDatabase(func(db *bolt.DB) error {
 
-	defer db.Close()
+		return db.Update(func(t *bolt.Tx) error {
+			bucket := t.Bucket([]byte(bucketName))
+			if bucket == nil {
+				return fmt.Errorf("bucket '%s' not found", bucketName)
+			}
 
-	// Begin a read-write transaction
-	fmt.Println("Beginning to write task to database...")
-	err = db.Update(func(transaction *bolt.Tx) error {
+			taskAsByte := []byte(task)
+			cursor := bucket.Cursor()
+			k, _ := cursor.Seek(taskAsByte)
+			if k == nil || string(k) != task {
+				return fmt.Errorf("task '%s' not found", task)
+			}
 
-		// Creates bucket if it doesn't exist; a bucket is a collection
-		// of key-value pairs -- tasks and their status (complete or incomplete)
-		bucket, err := transaction.CreateBucketIfNotExists([]byte(bucketName))
-		if err != nil {
-			return fmt.Errorf("error creating bucket: %s", err)
-		}
+			err := bucket.Delete(taskAsByte)
+			if err != nil {
+				return fmt.Errorf("failed to delete task '%s': %w", task, err)
+			}
 
-		// Default value for all task keys is "false"
-		// `bucket` requires the key and value to both be bytes
-		stringVal := strconv.FormatBool(false)
-		falseByteSlice := []byte(stringVal)
-
-		err = bucket.Put([]byte(task), falseByteSlice)
-		if err != nil {
-			return fmt.Errorf("error writing task to database: %s", err)
-		}
-		return nil
+			return nil
+		})
 	})
+}
 
-	if err != nil {
-		log.Printf("Error writing task '%s' to database: %s\n", task, err)
-		return err
-	}
+func RemoveAllTasks() error {
 
-	fmt.Printf("Task '%s' written to database successfully!\n", task)
-	return nil
+	fmt.Println("Attempting to delete all tasks...")
+	return withDatabase(func(db *bolt.DB) error {
+
+		return db.Update(func(t *bolt.Tx) error {
+			err := t.DeleteBucket([]byte(bucketName))
+			if err != nil && err != bolt.ErrBucketNotFound {
+				return fmt.Errorf("failed to delete bucket '%s': %w", bucketName, err)
+			}
+
+			if err == bolt.ErrBucketNotFound {
+				log.Printf("Bucket '%s' not found. Creating a new bucket...", bucketName)
+			} else {
+				log.Printf("Bucket '%s' successfully removed. Creating a new empty bucket...", bucketName)
+			}
+
+			_, err = t.CreateBucket([]byte(bucketName))
+			if err != nil {
+				return fmt.Errorf("failed to create bucket '%s': %w", bucketName, err)
+			}
+
+			log.Println("Successfully removed all tasks")
+			return nil
+		})
+	})
 }

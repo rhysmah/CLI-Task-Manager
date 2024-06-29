@@ -4,31 +4,37 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
+	"cli-task-manager/database"
+	"log"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-// removeCmd represents the remove command
 var removeCmd = &cobra.Command{
 	Use:   "remove",
 	Short: "Removes a task from your task list",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Add DB function to remove task from list")
+
+		removeAll, _ := cmd.Flags().GetBool("all")
+		if removeAll {
+			err := database.RemoveAllTasks()
+			if err != nil {
+				log.Printf("Error removing all tasks: %v", err)
+				return
+			}
+			log.Println("Successfully removed all tasks")
+			return
+		}
+
+		// Remove specific task
+		taskDescription := strings.Join(args, " ")
+		err := database.RemoveTask(taskDescription)
+		if err != nil {
+			log.Printf("Error removing task '%s': %v", taskDescription, err)
+			return
+		}
+		log.Printf("Task '%s' successfully removed", taskDescription)
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(removeCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// removeCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// removeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
