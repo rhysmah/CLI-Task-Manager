@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"cli-task-manager/database"
-	"log"
+	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -21,10 +21,10 @@ var removeCmd = &cobra.Command{
 		if removeAll {
 			err := database.RemoveAllTasks()
 			if err != nil {
-				log.Printf("Error removing all tasks: %v", err)
+				fmt.Printf("Error removing all tasks: %s", err)
 				return
 			}
-			log.Println("Successfully removed all tasks")
+			fmt.Println("Successfully removed all tasks")
 			return
 		}
 
@@ -32,9 +32,9 @@ var removeCmd = &cobra.Command{
 		taskDescription := strings.Join(args, " ")
 		err := database.RemoveTask(taskDescription)
 		if err != nil {
-			log.Printf("Error removing task '%s': %v", taskDescription, err)
+			fmt.Printf("Error removing task '%s': %s", taskDescription, err)
 			return
 		}
-		log.Printf("Task '%s' successfully removed", taskDescription)
+		fmt.Printf("Task '%s' successfully removed", taskDescription)
 	},
 }

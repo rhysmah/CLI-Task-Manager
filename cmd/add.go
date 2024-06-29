@@ -17,9 +17,9 @@ var addCmd = &cobra.Command{
 		taskDescription := strings.Join(args, " ")
 		err := database.AddTask(taskDescription)
 		if err != nil {
-			fmt.Printf("error writing task '%s': %v\n", taskDescription, err)
+			fmt.Printf("Error writing task '%s': %s\n", taskDescription, err)
 			return
 		}
-		fmt.Printf("Task '%s' successfully written to database!\n", taskDescription)
+		fmt.Printf("Task '%s' successfully added to list!\n", taskDescription)
 	},
 }

@@ -3,7 +3,6 @@ package cmd
 import (
 	"cli-task-manager/database"
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -19,8 +18,7 @@ var listCmd = &cobra.Command{
 
 		tasks, err := database.ListTasks()
 		if err != nil {
-			log.Printf("Error reading tasks from database: %v", err)
-			fmt.Println("An error occurred while reading tasks from the database.")
+			fmt.Printf("An error occurred while reading tasks: %s", err)
 			return
 		}
 
